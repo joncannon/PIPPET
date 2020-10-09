@@ -1,0 +1,72 @@
+function out = PIPPET_params(varargin)
+
+gauss_distribution = @(x, mean, v) exp(-.5 * ((x - mean).^ 2) ./ v)./ (sqrt(2*pi*v));
+
+p = inputParser;
+addParameter(p,'n_streams',1,@isnumeric);
+addParameter(p,'events_unit',[.25],@isnumeric);
+addParameter(p,'variance_unit',[.0001],@isnumeric);
+addParameter(p,'lambda_unit',[0.02],@isnumeric);
+addParameter(p,'lambda_0',0.01,@isnumeric);
+addParameter(p,'expected_cycles',4,@isnumeric);
+addParameter(p,'expected_period',.25,@isnumeric);
+
+addParameter(p,'event_times',[1],@isnumeric);
+addParameter(p,'tmax',nan,@isnumeric);
+addParameter(p,'dt',0.001,@isnumeric);
+addParameter(p,'mu_0',0,@isnumeric);
+addParameter(p,'C_0',0.0002,@isnumeric);
+addParameter(p,'sigma',0.05,@isnumeric);
+addParameter(p,'display', true, @isboolean);
+addParameter(p,'x_list', [0], @isboolean);
+addParameter(p,'title', '');
+
+
+parse(p,varargin{:})
+out = p.Results;
+out.streams = cell(1,p.Results.n_streams);
+
+last_events = [];
+last_expected = [];
+
+if out.n_streams > 1 || iscell(out.events_unit)
+    for j = 1:out.n_streams
+        out.streams{j} = PIPPET_stream_params(out.events_unit{j}, out.variance_unit{j}, out.lambda_unit{j}, out.lambda_0{j}, out.expected_cycles{j}, out.expected_period{j}, out.event_times{j});
+        if ~isempty(out.streams{j}.event_times)
+            last_event(end+1) = max(out.streams{j}.event_times);
+        end
+        last_expected(end+1) = max(out.streams{j}.e_means);
+    end
+else
+    out.streams{1} = PIPPET_stream_params(out.events_unit, out.variance_unit, out.lambda_unit, out.lambda_0, out.expected_cycles, out.expected_period, out.event_times);
+    if ~isempty(out.streams{1}.event_times)
+        last_events = out.streams{1}.event_times(end);
+    end
+    last_expected(end+1) = max(out.streams{1}.e_means);
+end
+
+if isnan(out.tmax)
+    if ~isempty(last_events)
+        out.tmax = max(last_events) + 0.2;
+    else
+        out.tmax = max(last_expected) + .2;
+    end
+end
+
+for j = 1:out.n_streams
+    out.streams{j}.expect_func = @(x_list) expectation_function(x_list, out.streams{j}.e_means(i)
+end
+
+
+out.t_list = 0:out.dt:out.tmax;
+
+
+
+out.templates = zeros(out.n_streams, length(out.t_list));
+for j = 1:out.n_streams
+    for i = 1:length(out.streams{j}.e_means)
+        out.templates(j,:) = out.templates(j,:) + out.streams{j}.e_lambdas(i)*gauss_distribution(out.t_list, out.streams{j}.e_means(i), out.streams{j}.e_vars(i));
+    end
+    out.templates(j,:) = out.templates(j,:) + out.streams{j}.lambda_0;
+    out.streams{j}.template = out.templates(j,:);
+end
