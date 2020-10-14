@@ -11,15 +11,18 @@ addParameter(p,'expected_period',.25,@isnumeric);
 
 addParameter(p,'event_times',[1],@isnumeric);
 addParameter(p,'tmax',nan,@isnumeric);
+
 addParameter(p,'dt',0.001,@isnumeric);
 addParameter(p,'mu_0',[0, 1],@isnumeric);
 addParameter(p,'C_0',[.0001,0; 0,.04],@isnumeric);
 addParameter(p,'sigma',0.05,@isnumeric);
-addParameter(p,'display', true, @isboolean);
-addParameter(p,'x_list', [0], @isboolean);
+addParameter(p,'display', true);
+addParameter(p,'x_list', [0]);
 
-addParameter(p,'sigma_2',0.02,@isnumeric);
+addParameter(p,'phimax',nan,@isnumeric);
+addParameter(p,'sigma_2',0.05,@isnumeric);
 addParameter(p,'true_speed',1,@isnumeric);
+addParameter(p,'dt_ellipse',.2,@isnumeric);
 
 addParameter(p,'title', '');
 
@@ -51,8 +54,14 @@ if isnan(out.tmax)
     if ~isempty(last_events)
         out.tmax = max(last_events) + 0.2;
     else
-        out.tmax = max(last_expected) + .2;
+        out.tmax = 1;
     end
+end
+
+out.tmax = ceil(out.tmax/out.dt)*out.dt;
+
+if isnan(out.phimax)
+    out.phimax = max(last_expected) + 0.2;
 end
 
 for j = 1:out.n_streams

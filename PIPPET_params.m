@@ -15,8 +15,8 @@ addParameter(p,'dt',0.001,@isnumeric);
 addParameter(p,'mu_0',0,@isnumeric);
 addParameter(p,'C_0',0.0002,@isnumeric);
 addParameter(p,'sigma',0.05,@isnumeric);
-addParameter(p,'display', true, @isboolean);
-addParameter(p,'x_list', [0], @isboolean);
+addParameter(p,'display', true);
+addParameter(p,'x_list', [0]);
 addParameter(p,'title', '');
 
 

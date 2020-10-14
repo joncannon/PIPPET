@@ -61,7 +61,7 @@ if params.display
             plot([0,t_max], [1,1]*params.streams{j}.e_means(i), 'b')
         end
     end
-    xlabel('Time (s)')
+    xlabel('Time (sec)')
 
     subplot(1,5,1)
     for j = 1:params.n_streams
