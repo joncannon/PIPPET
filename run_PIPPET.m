@@ -54,14 +54,29 @@ if params.display
     hold on
     for j = 1:params.n_streams
         for i=1:length(params.streams{j}.event_times)
-            plot([1,1]*params.streams{j}.event_times(i), [0,t_max], 'r')
+            width = .5;
+            linespec = 'r';
+            if params.streams{j}.highlight_event_indices(i)==0
+                linespec = 'r-.';
+            elseif params.streams{j}.highlight_event_indices(i)==2
+                width = 1.5;
+            end
+            plot([1,1]*params.streams{j}.event_times(i), [0,t_max], linespec, 'LineWidth', width);
         end
 
         for i=1:length(params.streams{j}.e_means)
-            plot([0,t_max], [1,1]*params.streams{j}.e_means(i), 'b')
+            width = .5;
+            linespec = 'b';
+            if params.streams{j}.highlight_expectations(i)==0
+                linespec = 'b-.';
+            elseif params.streams{j}.highlight_expectations(i)==2
+                width = 1.5;
+            end
+            plot([0,t_max], [1,1]*params.streams{j}.e_means(i), linespec, 'LineWidth', width)
         end
     end
     xlabel('Time (sec)')
+    
 
     subplot(1,5,1)
     for j = 1:params.n_streams
@@ -70,5 +85,7 @@ if params.display
     ylim([0, t_max])
     ylabel('Phase \phi')
     xlabel({'log likelihood';'log(\lambda(\phi))'});
+    set(gca,'Yticklabel',[])
     sgtitle(params.title)
+    
 end

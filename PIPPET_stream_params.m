@@ -1,4 +1,4 @@
-function p = PIPPET_stream_params(events_unit, variance_unit, lambda_unit, lambda_0, expected_cycles, expected_period, event_times)
+function p = PIPPET_stream_params(events_unit, variance_unit, lambda_unit, lambda_0, expected_cycles, expected_period, event_times, highlight_expectations, highlight_event_indices)
 
 p = struct();
 
@@ -7,9 +7,12 @@ gauss_distribution = @(x, mean, v) exp(-.5 * ((x - mean).^ 2) ./ v)./ (sqrt(2*pi
 p.e_means = [];
 p.event_times = event_times;
 p.lambda_0 = lambda_0;
+p.highlight_event_indices = highlight_event_indices;
+p.highlight_expectations = [];
 
 for i=1:expected_cycles
     p.e_means = [p.e_means, events_unit + (i-1)*expected_period];
+    p.highlight_expectations = [p.highlight_expectations, highlight_expectations];
 end
 
 p.e_vars = repmat(variance_unit, [1,expected_cycles]);

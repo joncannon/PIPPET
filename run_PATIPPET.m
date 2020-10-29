@@ -30,8 +30,8 @@ for i=2:length(t_list)
     dC_sum = 0;
     
     for j = 1:params.n_streams
-        %dmu_sum = dmu_sum + params.streams{j}.Lambda_star(mu_past, C_past)*(params.streams{j}.mu_star(mu_past, C_past)-mu_past);
-        %dC_sum = dC_sum + params.streams{j}.Lambda_star(mu_past, C_past)*(params.streams{j}.C_star(mu_past, C_past)-C_past);
+        dmu_sum = dmu_sum + params.streams{j}.Lambda_star(mu_past, C_past)*(params.streams{j}.mu_star(mu_past, C_past)-mu_past);
+        dC_sum = dC_sum + params.streams{j}.Lambda_star(mu_past, C_past)*(params.streams{j}.C_star(mu_past, C_past)-C_past);
     end
     
     dmu = dt*([mu_past(2); 0] - dmu_sum);
@@ -52,7 +52,7 @@ for i=2:length(t_list)
     C_list(:,:,i) = C;
 end
 
-if params.display
+if params.display_phasetempo
     phi_list = -.2:dt:params.phimax;
     
     event_times = params.streams{1}.event_times;
@@ -65,7 +65,7 @@ if params.display
     subplot(5,1,5)
     plot(phi_list, log(expect_func(phi_list)), 'k')
     xlim([-.2, params.phimax])
-    xlabel('Phase \phi_1')
+    xlabel('Phase \phi')
     ylabel({'log likelihood';'log(\lambda(\phi_1))'})
     
     subplot(5,1, [1,2,3,4])
@@ -104,7 +104,7 @@ if params.display
     ylim(ybounds)
 
     
-    ylabel('Tempo \phi_2 (beats per sec)')
+    ylabel('Tempo \theta (beats per sec)')
     
     for i = 1:length(e_means)
         plot([1,1]*e_means(i), [0,5], 'b')
@@ -131,4 +131,75 @@ function h = plot_ellipses(mu, C, phimax, ybounds, levels)
     [C,h] = contour(X,Y,z,top*levels + bottom+(1-levels));
 end
 
+
+
+if params.display_phase
+    figure()
+    subplot(1,5, [2,3,4,5])
+    shadedErrorBar(t_list, mu_list(1,:), 2*sqrt(C_list(1,1,:)))
+    ylim([0, t_max])
+    hold on
+    for j = 1:params.n_streams
+        for i=1:length(params.streams{j}.event_times)
+            width = .5;
+            linespec = 'r';
+            if params.streams{j}.highlight_event_indices(i)==0
+                linespec = 'r-.';
+            elseif params.streams{j}.highlight_event_indices(i)==2
+                width = 1.5;
+            end
+            plot([1,1]*params.streams{j}.event_times(i), [0,t_max], linespec, 'LineWidth', width);
+        end
+
+        for i=1:length(params.streams{j}.e_means)
+            width = .5;
+            linespec = 'b';
+            if params.streams{j}.highlight_expectations(i)==0
+                linespec = 'b-.';
+            elseif params.streams{j}.highlight_expectations(i)==2
+                width = 1.5;
+            end
+            plot([0,t_max], [1,1]*params.streams{j}.e_means(i), linespec, 'LineWidth', width)
+        end
+    end
+    xlabel('Time (sec)')
+    
+
+    subplot(1,5,1)
+    for j = 1:params.n_streams
+        plot(log(params.streams{j}.expect_func(t_list)), t_list, 'k');
+    end
+    ylim([0, t_max])
+    ylabel('Phase \phi')
+    xlabel({'log likelihood';'log(\lambda(\phi))'});
+    set(gca,'Yticklabel',[])
+    sgtitle(params.title)
+    
+end
+
+
+if params.display_tempo
+    figure()
+    shadedErrorBar(t_list, mu_list(2,:), 2*sqrt(C_list(2,2,:)))
+    hold on
+    for j = 1:params.n_streams
+        for i=1:length(params.streams{j}.event_times)
+            width = .5;
+            linespec = 'r';
+            if params.streams{j}.highlight_event_indices(i)==0
+                linespec = 'r-.';
+            elseif params.streams{j}.highlight_event_indices(i)==2
+                width = 1.5;
+            end
+            plot([1,1]*params.streams{j}.event_times(i), [0,t_max], linespec, 'LineWidth', width);
+        end
+
+    end
+    xlabel('Time (sec)')
+    ylim([.6,1.4])
+
+    ylabel('Tempo \theta')
+    sgtitle(params.title)
+    
+end
 end
