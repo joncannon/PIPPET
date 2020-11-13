@@ -24,8 +24,8 @@ for i=2:length(t_list)
     dC_sum = 0;
     
     for j = 1:params.n_streams
-        dmu_sum = dmu_sum + params.streams{j}.Lambda_star(mu_past, C_past)*(params.streams{j}.mu_star(mu_past, C_past)-mu_past);
-        dC_sum = dC_sum + params.streams{j}.Lambda_star(mu_past, C_past)*(params.streams{j}.C_star(mu_past, C_past)-C_past);
+        dmu_sum = dmu_sum + params.streams{j}.Lambda_bar(mu_past, C_past)*(params.streams{j}.mu_bar(mu_past, C_past)-mu_past);
+        dC_sum = dC_sum + params.streams{j}.Lambda_bar(mu_past, C_past)*(params.streams{j}.C_bar(mu_past, C_past)-C_past);
     end
     
     dmu = dt*(1 - dmu_sum);
@@ -35,8 +35,8 @@ for i=2:length(t_list)
     
     for j = 1:params.n_streams
         if event_num(j) <= length(params.streams{j}.event_times) && (t>params.streams{j}.event_times(event_num(j)) & t_past<=params.streams{j}.event_times(event_num(j)))
-            mu_tmp = params.streams{j}.mu_star(mu, C);
-            C = params.streams{j}.C_star(mu, C);
+            mu_tmp = params.streams{j}.mu_bar(mu, C);
+            C = params.streams{j}.C_bar(mu, C);
             mu = mu_tmp;
             event_num(j) = event_num(j)+1;
         end
