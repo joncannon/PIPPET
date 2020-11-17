@@ -1,4 +1,4 @@
-function [mu_list, C_list] = run_PATIPPET(params)
+function [mu_list, C_list, Pi_list] = run_PATIPPET(params)
 
 gauss2 = @(x,y, mean, V) exp(-.5 * (([x,y]' - mean)'*(V\([x,y]'-mean))))./ (sqrt((2*pi)^2*abs(det(V))));
 
@@ -14,6 +14,9 @@ t_list = 0:dt:ceil(t_max/dt)*dt;
 mu_list = zeros(2, length(t_list));
 mu_list(:,1) = params.mu_0;
 
+Pi_list = zeros(2,2,length(t_list));
+Pi_list(:,:,1) = params.C_0 + params.mu_0*(params.mu_0)';
+
 C_list = zeros(2,2,length(t_list));
 C_list(:,:,1) = params.C_0;
 
@@ -21,38 +24,53 @@ event_num = ones(1,params.n_streams);
 
 for i=2:length(t_list)
     t = t_list(i);
-
-    t_past = t_list(i-1);
-    C_past = C_list(:,:,i-1);
-    mu_past = mu_list(:,i-1);
     
+    t_past = t_list(i-1);
+    mu_past = mu_list(:,i-1);
+    C_past = C_list(:,:,i-1);
+    Pi_past = Pi_list(:,:,i-1);
+    %Pi_past = C_past + mu_past * mu_past'
+    %Pi_past == Pi_past_2
+
     dmu_sum = 0;
-    dC_sum = 0;
+    dPi_sum = 0;
     
     for j = 1:params.n_streams
         dmu_sum = dmu_sum + params.streams{j}.Lambda_bar(mu_past, C_past)*(params.streams{j}.mu_bar(mu_past, C_past)-mu_past);
+        dPi_sum = dPi_sum + params.streams{j}.Lambda_bar(mu_past, C_past)*(params.streams{j}.Pi_bar(mu_past, C_past)-Pi_past);
     end
-    
+%    dPi_sum
+%    dmu_sum
     dmu = dt*([mu_past(2); 0] - dmu_sum);
+    dPi = dt*([sigma^2 + 2*C_past(1,2) + 2*mu_past(1)*mu_past(2) + mu_past(2)^2*dt, C_past(2,2) + mu_past(2)^2; C_past(2,2) + mu_past(2)^2, sigma_2^2] );
+%    dPi = dt*([sigma^2 + 2*Pi_past(1,2) + , Pi_past(2,2) ; Pi_past(2,2) , sigma_2^2] - dPi_sum)
+%    dC_1 = dt*([sigma^2 + 2*C_past(1,2) , C_past(2,2) ; C_past(2,2) , sigma_2^2] )
     mu = mu_past+dmu;
+    Pi = Pi_past+dPi;
+%    'actual dC'
     
-    for j = 1:params.n_streams
-        dC_sum = dC_sum + params.streams{j}.Lambda_bar(mu_past, C_past)*(params.streams{j}.C_bar(mu, mu_past, C_past)-C_past);
-    end
-    dC = dt*([sigma^2 + 2*C_past(1,2), C_past(2,2); C_past(2,2), sigma_2^2] - dC_sum);
-    C = C_past+dC;
+    % What's missing right now is a term indicating that Pi_11 is
+    % increasing due to phase increase -- it's exactly mu(2)^2, but I can't
+    % figure out why that's not included in Pi_12 term.
+
+%    dC = Pi - (mu*mu') - C_past
+    C = Pi - mu*mu'
+%    A = mu_past*mu_past'
+%    Z = mu*mu'
     
     for j = 1:params.n_streams
         if event_num(j) <= length(params.streams{j}.event_times) && (t>=params.streams{j}.event_times(event_num(j)) & t_past<params.streams{j}.event_times(event_num(j)))
-            mu_tmp = params.streams{j}.mu_bar(mu, C);
-            C = params.streams{j}.C_bar(mu_tmp, mu, C);
+            mu_tmp = params.streams{j}.mu_bar(mu_past, C_past);
+            Pi = params.streams{j}.Pi_bar(mu_past, C_past);
             mu = mu_tmp;
             event_num(j) = event_num(j)+1;
+            'ding'
         end
     end
 
     mu_list(:,i) = mu;
-    C_list(:,:,i) = C;
+    Pi_list(:,:,i) = Pi;
+    C_list(:,:,i) = Pi - mu*mu';
 end
 
 if params.display_phasetempo
@@ -66,10 +84,10 @@ if params.display_phasetempo
     
 
     subplot(5,1,5)
-    plot(phi_list, log(expect_func(phi_list)), 'k')
+    plot(phi_list, expect_func(phi_list), 'k')
     xlim([-.2, params.phimax])
     xlabel('Phase \phi')
-    ylabel({'log likelihood';'log(\lambda(\phi_1))'})
+    ylabel({'\lambda(\phi_1)'})
     
     subplot(5,1, [1,2,3,4])
     
@@ -171,11 +189,11 @@ if params.display_phase
 
     subplot(1,5,1)
     for j = 1:params.n_streams
-        plot(log(params.streams{j}.expect_func(t_list)), t_list, 'k');
+        plot(params.streams{j}.expect_func(t_list), t_list, 'k');
     end
     ylim([0, t_max])
     ylabel('Phase \phi')
-    xlabel({'log likelihood';'log(\lambda(\phi))'});
+    xlabel({'\lambda(\phi)'});
     set(gca,'Yticklabel',[])
     sgtitle(params.title)
     

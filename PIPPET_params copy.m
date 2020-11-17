@@ -3,7 +3,7 @@ function out = PIPPET_params(varargin)
 p = inputParser;
 addParameter(p,'n_streams',1);
 addParameter(p,'means_unit',[.25]);
-addParameter(p,'variance_unit',[.002]);%.0001
+addParameter(p,'variance_unit',[.0001]);
 addParameter(p,'lambda_unit',[0.02]);
 addParameter(p,'lambda_0',0.01);
 addParameter(p,'expected_cycles',4);
@@ -16,7 +16,7 @@ addParameter(p,'tmax',nan);
 addParameter(p,'dt',0.001);
 addParameter(p,'mu_0',0);
 addParameter(p,'C_0',0.0002);
-addParameter(p,'sigma',0.07);
+addParameter(p,'sigma',0.05);
 addParameter(p,'display', true);
 addParameter(p,'x_list', 0);
 addParameter(p,'title', '');

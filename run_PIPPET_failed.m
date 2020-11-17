@@ -1,4 +1,4 @@
-function [mu_list, C_list] = run_PIPPET(params)
+function [mu_list, C_list, Pi_list] = run_PIPPET(params)
 
 t_max = params.tmax;
 dt = params.dt;
@@ -12,6 +12,9 @@ mu_list(1) = params.mu_0;
 C_list = zeros(size(t_list));
 C_list(1) = params.C_0;
 
+Pi_list = zeros(size(t_list));
+Pi_list(1) = params.C_0 + params.mu_0^2;
+
 event_num = ones(1,params.n_streams);
 for i=2:length(t_list)
     t = t_list(i);
@@ -19,29 +22,30 @@ for i=2:length(t_list)
     t_past = t_list(i-1);
     C_past = C_list(i-1);
     mu_past = mu_list(i-1);
+    Pi_past = C_past + mu_past^2;
     
     dmu_sum = 0;
-    dC_sum = 0;
+    dPi_sum = 0;
     
     for j = 1:params.n_streams
         dmu_sum = dmu_sum + params.streams{j}.Lambda_bar(mu_past, C_past)*(params.streams{j}.mu_bar(mu_past, C_past)-mu_past);
+        dPi_sum = dPi_sum + params.streams{j}.Lambda_bar(mu_past, C_past)*(params.streams{j}.Pi_bar(mu_past, C_past)-Pi_past);
     end
     
     dmu = dt*(1 - dmu_sum);
+    dPi = dt*(sigma^2 + 2*mu_past - dPi_sum);
+%    dC_1 = dt*(sigma^2 )
     mu = mu_past+dmu;
-    
-    for j = 1:params.n_streams
-        dC_sum = dC_sum + params.streams{j}.Lambda_bar(mu_past, C_past)*(params.streams{j}.C_bar(mu, mu_past, C_past)-C_past);
-    end
-    
-    dC = dt*(sigma^2 - dC_sum);
-    C = C_past+dC;
+    Pi = Pi_past+dPi;
+    C = Pi - mu^2 + dt^2;
+%    dC_2 = C - C_past
     
     for j = 1:params.n_streams
         if event_num(j) <= length(params.streams{j}.event_times) && (t>params.streams{j}.event_times(event_num(j)) & t_past<=params.streams{j}.event_times(event_num(j)))
             mu_tmp = params.streams{j}.mu_bar(mu, C);
-            C = params.streams{j}.C_bar(mu_tmp, mu, C);
+            Pi = params.streams{j}.Pi_bar(mu, C);
             mu = mu_tmp;
+            C = Pi - mu^2;
             event_num(j) = event_num(j)+1;
         end
     end

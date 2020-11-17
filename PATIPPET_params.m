@@ -1,9 +1,9 @@
 function out = PATIPPET_params(varargin)
 
 p = inputParser;
-addParameter(p,'n_streams',1,@isnumeric);
-addParameter(p,'events_unit',[.25],@isnumeric);
-addParameter(p,'variance_unit',[.0001],@isnumeric);
+addParameter(p,'n_streams',1,@isnumeric);               % Number of distinct event streams
+addParameter(p,'means_unit',[.25],@isnumeric);         %
+addParameter(p,'variance_unit',[.001],@isnumeric);
 addParameter(p,'lambda_unit',[0.02],@isnumeric);
 addParameter(p,'lambda_0',0.01,@isnumeric);
 addParameter(p,'expected_cycles',4,@isnumeric);
@@ -15,9 +15,9 @@ addParameter(p,'event_times',[1],@isnumeric);
 addParameter(p,'tmax',nan,@isnumeric);
 
 addParameter(p,'dt',0.001,@isnumeric);
-addParameter(p,'mu_0',[0, 1],@isnumeric);
+addParameter(p,'mu_0',[0; 1],@isnumeric);
 addParameter(p,'C_0',[.0001,0; 0,.04],@isnumeric);
-addParameter(p,'sigma',0.05,@isnumeric);
+addParameter(p,'sigma',0.05,@isnumeric); %0.05
 addParameter(p,'display_phasetempo', true);
 addParameter(p,'display_phase', false);
 addParameter(p,'display_tempo', false);
@@ -27,6 +27,7 @@ addParameter(p,'phimax',nan,@isnumeric);
 addParameter(p,'sigma_2',0.05,@isnumeric);
 addParameter(p,'true_speed',1,@isnumeric);
 addParameter(p,'dt_ellipse',.2,@isnumeric);
+addParameter(p,'corrected',true);
 
 addParameter(p,'title', '');
 
@@ -40,10 +41,10 @@ last_expected = [];
 
 
 for j = 1:out.n_streams
-        if iscell(out.events_unit)
-            events_unit = out.events_unit{j};
+        if iscell(out.means_unit)
+            means_unit = out.means_unit{j};
         else
-            events_unit = out.events_unit;
+            means_unit = out.means_unit;
         end
         
         if iscell(out.variance_unit)
@@ -98,7 +99,7 @@ for j = 1:out.n_streams
             highlight_event_indices = zeros(size(event_times));
         end
         
-        out.streams{j} = PATIPPET_stream_params(events_unit, variance_unit, lambda_unit, lambda_0, expected_cycles, expected_period, event_times, highlight_expectations, highlight_event_indices);
+        out.streams{j} = PATIPPET_stream_params(means_unit, variance_unit, lambda_unit, lambda_0, expected_cycles, expected_period, event_times, highlight_expectations, highlight_event_indices, out.corrected);
         
         if isempty(highlight_expectations)
             out.streams{j}.highlight_expectations = zeros(size(out.streams{j}.e_means));
