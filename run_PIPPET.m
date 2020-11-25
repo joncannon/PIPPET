@@ -84,11 +84,11 @@ if params.display
 
     subplot(1,5,1)
     for j = 1:params.n_streams
-        plot(log(params.streams{j}.expect_func(t_list)), t_list, 'k');
+        plot(params.streams{j}.expect_func(t_list), t_list, 'k');
     end
     ylim([0, t_max])
     ylabel('Phase \phi')
-    xlabel({'log likelihood';'log(\lambda(\phi))'});
+    xlabel({'Expectation';'\tau(\phi)'});
     set(gca,'Yticklabel',[])
     sgtitle(params.title)
     

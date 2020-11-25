@@ -45,7 +45,8 @@ for i=2:length(t_list)
     for j = 1:params.n_streams
         if event_num(j) <= length(params.streams{j}.event_times) && (t>=params.streams{j}.event_times(event_num(j)) & t_past<params.streams{j}.event_times(event_num(j)))
             mu_tmp = params.streams{j}.mu_bar(mu, C);
-            C = params.streams{j}.C_bar(mu_tmp, mu, C);
+            C_tmp = params.streams{j}.C_bar(mu_tmp, mu, C);
+            C = C_tmp;
             mu = mu_tmp;
             event_num(j) = event_num(j)+1;
         end
@@ -66,10 +67,10 @@ if params.display_phasetempo
     
 
     subplot(5,1,5)
-    plot(phi_list, log(expect_func(phi_list)), 'k')
+    plot(phi_list, expect_func(phi_list), 'k')
     xlim([-.2, params.phimax])
     xlabel('Phase \phi')
-    ylabel({'log likelihood';'log(\lambda(\phi_1))'})
+    ylabel({'Expectation';'\tau(\phi)'})
     
     subplot(5,1, [1,2,3,4])
     
@@ -171,11 +172,11 @@ if params.display_phase
 
     subplot(1,5,1)
     for j = 1:params.n_streams
-        plot(log(params.streams{j}.expect_func(t_list)), t_list, 'k');
+        plot(params.streams{j}.expect_func(t_list), t_list, 'k');
     end
     ylim([0, t_max])
     ylabel('Phase \phi')
-    xlabel({'log likelihood';'log(\lambda(\phi))'});
+    xlabel({'Expectation';'\tau(\phi)'});
     set(gca,'Yticklabel',[])
     sgtitle(params.title)
     
