@@ -15,16 +15,16 @@ addParameter(p,'event_times',[1],@isnumeric);
 addParameter(p,'tmax',nan,@isnumeric);
 
 addParameter(p,'dt',0.001,@isnumeric);
-addParameter(p,'mu_0',[0; 1],@isnumeric);
-addParameter(p,'C_0',[.0001,0; 0,.04],@isnumeric);
-addParameter(p,'sigma',0.05,@isnumeric); %0.05
+addParameter(p,'xbar_0',[0; 1],@isnumeric);
+addParameter(p,'Sigma_0',[.0001,0; 0,.04],@isnumeric);
+addParameter(p,'sigma_phi',0.05,@isnumeric); %0.05
 addParameter(p,'display_phasetempo', true);
 addParameter(p,'display_phase', false);
 addParameter(p,'display_tempo', false);
 addParameter(p,'x_list', [0]);
 
 addParameter(p,'phimax',nan,@isnumeric);
-addParameter(p,'sigma_2',0.05,@isnumeric);
+addParameter(p,'sigma_theta',0.05,@isnumeric);
 addParameter(p,'true_speed',1,@isnumeric);
 addParameter(p,'dt_ellipse',.2,@isnumeric);
 addParameter(p,'corrected',true);

@@ -1,59 +1,59 @@
-function [mu_list, C_list] = run_PIPPET(params)
+function [phibar_list, V_list] = run_PIPPET(params)
 
 t_max = params.tmax;
 dt = params.dt;
-sigma = params.sigma;
+sigma_phi = params.sigma_phi;
 
 t_list = 0:dt:t_max;
 
-mu_list = zeros(size(t_list));
-mu_list(1) = params.mu_0;
+phibar_list = zeros(size(t_list));
+phibar_list(1) = params.phibar_0;
 
-C_list = zeros(size(t_list));
-C_list(1) = params.C_0;
+V_list = zeros(size(t_list));
+V_list(1) = params.V_0;
 
 event_num = ones(1,params.n_streams);
 for i=2:length(t_list)
     t = t_list(i);
 
     t_past = t_list(i-1);
-    C_past = C_list(i-1);
-    mu_past = mu_list(i-1);
+    V_past = V_list(i-1);
+    phibar_past = phibar_list(i-1);
     
-    dmu_sum = 0;
-    dC_sum = 0;
-    
-    for j = 1:params.n_streams
-        dmu_sum = dmu_sum + params.streams{j}.Lambda_bar(mu_past, C_past)*(params.streams{j}.mu_bar(mu_past, C_past)-mu_past);
-    end
-    
-    dmu = dt*(1 - dmu_sum);
-    mu = mu_past+dmu;
+    dphibar_sum = 0;
+    dV_sum = 0;
     
     for j = 1:params.n_streams
-        dC_sum = dC_sum + params.streams{j}.Lambda_bar(mu_past, C_past)*(params.streams{j}.C_bar(mu, mu_past, C_past)-C_past);
+        dphibar_sum = dphibar_sum + params.streams{j}.Lambda_hat(phibar_past, V_past)*(params.streams{j}.phi_hat(phibar_past, V_past)-phibar_past);
     end
     
-    dC = dt*(sigma^2 - dC_sum);
-    C = C_past+dC;
+    dphibar = dt*(1 - dphibar_sum);
+    phibar = phibar_past+dphibar;
+    
+    for j = 1:params.n_streams
+        dV_sum = dV_sum + params.streams{j}.Lambda_hat(phibar_past, V_past)*(params.streams{j}.V_hat(phibar, phibar_past, V_past)-V_past);
+    end
+    
+    dC = dt*(sigma_phi^2 - dV_sum);
+    C = V_past+dC;
     
     for j = 1:params.n_streams
         if event_num(j) <= length(params.streams{j}.event_times) && (t>params.streams{j}.event_times(event_num(j)) & t_past<=params.streams{j}.event_times(event_num(j)))
-            mu_tmp = params.streams{j}.mu_bar(mu, C);
-            C = params.streams{j}.C_bar(mu_tmp, mu, C);
-            mu = mu_tmp;
+            phibar_tmp = params.streams{j}.phi_hat(phibar, C);
+            C = params.streams{j}.V_hat(phibar_tmp, phibar, C);
+            phibar = phibar_tmp;
             event_num(j) = event_num(j)+1;
         end
     end
 
-    mu_list(i) = mu;
-    C_list(i) = C;
+    phibar_list(i) = phibar;
+    V_list(i) = C;
 end
 
 if params.display
     figure()
     subplot(1,5, [2,3,4,5])
-    shadedErrorBar(t_list, mu_list, 2*sqrt(C_list))
+    shadedErrorBar(t_list, phibar_list, 2*sqrt(V_list))
     ylim([0, t_max])
     hold on
     for j = 1:params.n_streams
@@ -79,7 +79,7 @@ if params.display
             plot([0,t_max], [1,1]*params.streams{j}.e_means(i), linespec, 'LineWidth', width)
         end
     end
-    xlabel('Time (sec)')
+    xlabel('Time (sec)','Interpreter','Latex')
     
 
     subplot(1,5,1)
@@ -87,8 +87,8 @@ if params.display
         plot(params.streams{j}.expect_func(t_list), t_list, 'k');
     end
     ylim([0, t_max])
-    ylabel('Phase \phi')
-    xlabel({'Expectation';'\tau(\phi)'});
+    ylabel('Phase $\phi$','Interpreter','Latex')
+    xlabel({'Expectation';'$\tau(\phi)$'},'Interpreter','Latex');
     set(gca,'Yticklabel',[])
     sgtitle(params.title)
     

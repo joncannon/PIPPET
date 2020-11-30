@@ -20,84 +20,84 @@ p.e_lambdas = repmat(lambda_unit, [1,expected_cycles]);
 
 
 
-mu_i = @(mu, C, i) (inv(C) + [1./p.e_vars(i), 0;0,0])\(C\mu + [p.e_means(i)./p.e_vars(i);0]);
-K_i = @(C, i) inv(inv(C) + [1./p.e_vars(i), 0;0,0]);
-Lambda_i = @(mu, C, i) p.e_lambdas(i) .* gauss_distribution(mu(1), p.e_means(i), p.e_vars(i)+C(1,1));
+xbar_i = @(xbar, Sigma, i) (inv(Sigma) + [1./p.e_vars(i), 0;0,0])\(Sigma\xbar + [p.e_means(i)./p.e_vars(i);0]);
+K_i = @(Sigma, i) inv(inv(Sigma) + [1./p.e_vars(i), 0;0,0]);
+Lambda_i = @(xbar, Sigma, i) p.e_lambdas(i) .* gauss_distribution(xbar(1), p.e_means(i), p.e_vars(i)+Sigma(1,1));
 
 
 
 
 
 
-function LS = Lambda_bar_uncorrected(mu, C)
-    LS = p.lambda_0;
+function Lambda_hat = Lambda_hat_uncorrected(xbar, Sigma)
+    Lambda_hat = p.lambda_0;
     for i = 1:length(p.e_means)
-         LS = LS + Lambda_i(mu, C, i);
+         Lambda_hat = Lambda_hat + Lambda_i(xbar, Sigma, i);
     end
 end
 
-function CS = C_bar_uncorrected(mu_new, mu_old, C)
+function Sigma_hat = Sigma_hat_uncorrected(xbar_new, xbar_old, Sigma)
 
-    S = p.lambda_0 * (C + (mu_old-mu_new)*(mu_old-mu_new)');
+    Sigma_sum = p.lambda_0 * (Sigma + (xbar_old-xbar_new)*(xbar_old-xbar_new)');
     for i = 1:length(p.e_means)
-        mu_i_tmp = mu_i(mu_old, C, i);
-        K_i_tmp = K_i(C, i);
-        S = S + Lambda_i(mu_old, C, i) * (K_i_tmp + (mu_i_tmp-mu_new)*(mu_i_tmp-mu_new)');
+        xbar_i_tmp = xbar_i(xbar_old, Sigma, i);
+        K_i_tmp = K_i(Sigma, i);
+        Sigma_sum = Sigma_sum + Lambda_i(xbar_old, Sigma, i) * (K_i_tmp + (xbar_i_tmp-xbar_new)*(xbar_i_tmp-xbar_new)');
     end
-    CS = S/Lambda_bar(mu_old, C);
-end
-   
-function MS = mu_bar_uncorrected(mu, C)
-    S = p.lambda_0*mu;
-    for i = 1:length(p.e_means)
-         S = S + Lambda_i(mu, C, i) * mu_i(mu, C, i);
-    end
-    MS = S/Lambda_bar(mu, C);
-end
-
-
-
-
-
-
-
-function LS = Lambda_bar(mu, C)
-    LS = p.lambda_0 * mu(2);
-    for i = 1:length(p.e_means)
-        mu_i_tmp = mu_i(mu, C, i);
-        LS = LS + Lambda_i(mu, C, i)*mu_i_tmp(2);
-    end
-end
-
-function CS = C_bar(mu_new, mu_old, C)
-
-    S = p.lambda_0 * (mu_old(2)*(C + (mu_old-mu_new)*(mu_old-mu_new)') + (mu_old - mu_new)*C(2,:) +C(:,2)*(mu_old - mu_new)');
-    for i = 1:length(p.e_means)
-        mu_i_tmp = mu_i(mu_old, C, i);
-        K_i_tmp = K_i(C, i);
-        S = S + Lambda_i(mu_old, C, i) * (mu_i_tmp(2)*(K_i_tmp + (mu_i_tmp-mu_new)*(mu_i_tmp-mu_new)') + (mu_i_tmp - mu_new)*K_i_tmp(2,:) + K_i_tmp(:,2)*(mu_i_tmp - mu_new)');
-    end
-    CS = S/Lambda_bar(mu_old, C);
+    Sigma_hat = Sigma_sum/Lambda_hat(xbar_old, Sigma);
 end
    
-function MS = mu_bar(mu, C)
-    S = p.lambda_0*(C(:,2)+mu*mu(2));
+function x_hat = x_hat_uncorrected(xbar, Sigma)
+    x_sum = p.lambda_0*xbar;
     for i = 1:length(p.e_means)
-        K_i_tmp = K_i(C, i);
-        mu_i_tmp = mu_i(mu, C, i);
-        S = S + Lambda_i(mu, C, i) * (K_i_tmp(:,2)+mu_i_tmp*mu_i_tmp(2));
+         x_sum = x_sum + Lambda_i(xbar, Sigma, i) * xbar_i(xbar, Sigma, i);
     end
-    MS = S/Lambda_bar(mu, C);
+    x_hat = x_sum/Lambda_hat(xbar, Sigma);
+end
+
+
+
+
+
+
+
+function Lambdahat = Lambda_hat(xbar, Sigma)
+    Lambdahat = p.lambda_0 * xbar(2);
+    for i = 1:length(p.e_means)
+        xbar_i_tmp = xbar_i(xbar, Sigma, i);
+        Lambdahat = Lambdahat + Lambda_i(xbar, Sigma, i)*xbar_i_tmp(2);
+    end
+end
+
+function Sigmahat = Sigma_hat(xbar_new, xbar_old, Sigma)
+
+    Sigma_sum = p.lambda_0 * (xbar_old(2)*(Sigma + (xbar_old-xbar_new)*(xbar_old-xbar_new)') + (xbar_old - xbar_new)*Sigma(2,:) +Sigma(:,2)*(xbar_old - xbar_new)');
+    for i = 1:length(p.e_means)
+        xbar_i_tmp = xbar_i(xbar_old, Sigma, i);
+        K_i_tmp = K_i(Sigma, i);
+        Sigma_sum = Sigma_sum + Lambda_i(xbar_old, Sigma, i) * (xbar_i_tmp(2)*(K_i_tmp + (xbar_i_tmp-xbar_new)*(xbar_i_tmp-xbar_new)') + (xbar_i_tmp - xbar_new)*K_i_tmp(2,:) + K_i_tmp(:,2)*(xbar_i_tmp - xbar_new)');
+    end
+    Sigmahat = Sigma_sum/Lambda_hat(xbar_old, Sigma);
+end
+   
+    function xhat = x_hat(xbar, Sigma)
+    x_sum = p.lambda_0*(Sigma(:,2)+xbar*xbar(2));
+    for i = 1:length(p.e_means)
+        K_i_tmp = K_i(Sigma, i);
+        xbar_i_tmp = xbar_i(xbar, Sigma, i);
+        x_sum = x_sum + Lambda_i(xbar, Sigma, i) * (K_i_tmp(:,2)+xbar_i_tmp*xbar_i_tmp(2));
+    end
+    xhat = x_sum/Lambda_hat(xbar, Sigma);
 end
 
 if corrected
-    p.Lambda_bar = @Lambda_bar;
-    p.mu_bar = @mu_bar;
-    p.C_bar = @C_bar;
+    p.Lambda_hat = @Lambda_hat;
+    p.x_hat = @x_hat;
+    p.Sigma_hat = @Sigma_hat;
 else
-    p.Lambda_bar = @Lambda_bar_uncorrected;
-    p.mu_bar = @mu_bar_uncorrected;
-    p.C_bar = @C_bar_uncorrected;
+    p.Lambda_hat = @Lambda_hat_uncorrected;
+    p.x_hat = @x_hat_uncorrected;
+    p.Sigma_hat = @Sigma_hat_uncorrected;
 end
 
 end

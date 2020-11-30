@@ -18,10 +18,10 @@ end
 p.e_vars = repmat(variance_unit, [1,expected_cycles]);
 p.e_lambdas = repmat(lambda_unit, [1,expected_cycles]);
 
-mu_i_list = @(mu, C) (mu/C + p.e_means./p.e_vars)./(1/C + 1./p.e_vars);
-K_i_list = @(C) 1./(1/C + 1./p.e_vars);
-Lambda_i_list = @(mu, C) p.e_lambdas .* gauss_distribution(mu, p.e_means, p.e_vars+C);
+phibar_i_list = @(phibar, V) (phibar/V + p.e_means./p.e_vars)./(1/V + 1./p.e_vars);
+K_i_list = @(V) 1./(1/V + 1./p.e_vars);
+Lambda_i_list = @(phibar, V) p.e_lambdas .* gauss_distribution(phibar, p.e_means, p.e_vars+V);
 
-p.Lambda_bar = @(mu, C) lambda_0 + sum(Lambda_i_list(mu, C));
-p.mu_bar = @(mu, C) (lambda_0*mu + sum(Lambda_i_list(mu, C) .* mu_i_list(mu,C)))/p.Lambda_bar(mu,C);
-p.C_bar= @(mu_new, mu_old ,C) (lambda_0*(C+(mu_old-mu_new).^2) + sum(Lambda_i_list(mu_old, C) .* (K_i_list(C) + (mu_i_list(mu_old, C)-mu_new).^2)))/p.Lambda_bar(mu_old,C);
+p.Lambda_hat = @(phibar, V) lambda_0 + sum(Lambda_i_list(phibar, V));
+p.phi_hat = @(phibar, V) (lambda_0*phibar + sum(Lambda_i_list(phibar, V) .* phibar_i_list(phibar,V)))/p.Lambda_hat(phibar,V);
+p.V_hat= @(phibar_new, phibar_old, V) (lambda_0*(V+(phibar_old-phibar_new).^2) + sum(Lambda_i_list(phibar_old, V) .* (K_i_list(V) + (phibar_i_list(phibar_old, V)-phibar_new).^2)))/p.Lambda_hat(phibar_old,V);
