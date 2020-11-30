@@ -16,7 +16,7 @@ addParameter(p,'tmax',nan);
 addParameter(p,'dt',0.001);
 addParameter(p,'phibar_0',0);
 addParameter(p,'V_0',0.0002);
-addParameter(p,'sigma_phi',0.07);
+addParameter(p,'sigma_phi',0.05);
 addParameter(p,'display', true);
 addParameter(p,'x_list', 0);
 addParameter(p,'title', '');
