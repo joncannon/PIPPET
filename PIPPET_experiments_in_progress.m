@@ -1,6 +1,8 @@
+% (C) Jonathan Cannon, MIT, 2020
 
-Tapping: autocorr
-We introduce a tapping finger that aims to tap with the metronome but introduces motor noise. This tap is used as a second sensory stream for phase estimation. We calculate autocorrelation to determine the phase correction response as it corrects motor noise, and we compare it to the phase correction response to a phase shift.
+
+%Tapping: autocorr
+%We introduce a tapping finger that aims to tap with the metronome but introduces motor noise. This tap is used as a second sensory stream for phase estimation. We calculate autocorrelation to determine the phase correction response as it corrects motor noise, and we compare it to the phase correction response to a phase shift.
 n_events = 100;
 
 gauss_distribution = @(x, mean, v) exp(-.5 * ((x - mean).^ 2) ./ v)./ (sqrt(2*pi*v));
@@ -96,8 +98,8 @@ AC = autocorr(async)
 alpha = 1-AC(2)
 
 
-Tapping: phase shift
-The phase correction response to a phase shift, with same parameters as above (minus motor noise)
+%Tapping: phase shift
+%The phase correction response to a phase shift, with same parameters as above (minus motor noise)
 n_events = 10;
 phase_shift = 0.05;
 

@@ -1,3 +1,7 @@
+% © Jonathan Cannon, MIT, 2020
+% Simulates PIPPET model with specified parameters.
+
+
 function [phibar_list, V_list] = run_PIPPET(params)
 
 t_max = params.tmax;

@@ -1,5 +1,6 @@
 # PIPPET/PATIPPET
  Phase (and tempo) Inference from Point Process Event Timing
+Jonathan Cannon, MIT, 2020
  
  *See "Manuscript drafts > Revision_1_PIPPET.pdf" for essential context!*
  

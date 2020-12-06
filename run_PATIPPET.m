@@ -1,3 +1,6 @@
+% © Jonathan Cannon, MIT, 2020
+% Simulates PATIPPET model with specified parameters.
+
 function [xbar_list, Sigma_list] = run_PATIPPET(params)
 
 gauss2 = @(x,y, mean, V) exp(-.5 * (([x,y]' - mean)'*(V\([x,y]'-mean))))./ (sqrt((2*pi)^2*abs(det(V))));
