@@ -28,14 +28,14 @@ for i=2:length(t_list)
     dV_sum = 0;
     
     for j = 1:params.n_streams
-        dphibar_sum = dphibar_sum + params.streams{j}.Lambda_hat(phibar_past, V_past)*(params.streams{j}.phi_hat(phibar_past, V_past)-phibar_past);
+        dphibar_sum = dphibar_sum + params.streams{j}.T_hat(phibar_past, V_past)*(params.streams{j}.phi_hat(phibar_past, V_past)-phibar_past);
     end
     
     dphibar = dt*(1 - dphibar_sum);
     phibar = phibar_past+dphibar;
     
     for j = 1:params.n_streams
-        dV_sum = dV_sum + params.streams{j}.Lambda_hat(phibar_past, V_past)*(params.streams{j}.V_hat(phibar, phibar_past, V_past)-V_past);
+        dV_sum = dV_sum + params.streams{j}.T_hat(phibar_past, V_past)*(params.streams{j}.V_hat(phibar, phibar_past, V_past)-V_past);
     end
     
     dC = dt*(sigma_phi^2 - dV_sum);

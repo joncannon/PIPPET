@@ -33,14 +33,14 @@ for i=2:length(t_list)
     dSigma_sum = 0;
     
     for j = 1:params.n_streams
-        dxbar_sum = dxbar_sum + params.streams{j}.Lambda_hat(xbar_past, Sigma_past)*(params.streams{j}.x_hat(xbar_past, Sigma_past)-xbar_past);
+        dxbar_sum = dxbar_sum + params.streams{j}.T_hat(xbar_past, Sigma_past)*(params.streams{j}.x_hat(xbar_past, Sigma_past)-xbar_past);
     end
     
     dxbar = dt*([xbar_past(2); 0] - dxbar_sum);
     xbar = xbar_past+dxbar;
     
     for j = 1:params.n_streams
-        dSigma_sum = dSigma_sum + params.streams{j}.Lambda_hat(xbar_past, Sigma_past)*(params.streams{j}.Sigma_hat(xbar, xbar_past, Sigma_past)-Sigma_past);
+        dSigma_sum = dSigma_sum + params.streams{j}.T_hat(xbar_past, Sigma_past)*(params.streams{j}.Sigma_hat(xbar, xbar_past, Sigma_past)-Sigma_past);
     end
     dSigma = dt*([sigma_phi^2 + 2*Sigma_past(1,2), Sigma_past(2,2); Sigma_past(2,2), sigma_theta^2] - dSigma_sum);
     Sigma = Sigma_past+dSigma;
