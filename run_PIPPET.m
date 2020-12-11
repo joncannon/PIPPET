@@ -2,11 +2,12 @@
 % Simulates PIPPET model with specified parameters.
 
 
-function [phibar_list, V_list] = run_PIPPET(params)
+function [phibar_list, V_list, tap_times] = run_PIPPET(params)
 
 t_max = params.tmax;
 dt = params.dt;
 sigma_phi = params.sigma_phi;
+eta_phi = params.eta_phi;
 
 t_list = 0:dt:t_max;
 
@@ -31,7 +32,7 @@ for i=2:length(t_list)
         dphibar_sum = dphibar_sum + params.streams{j}.T_hat(phibar_past, V_past)*(params.streams{j}.phi_hat(phibar_past, V_past)-phibar_past);
     end
     
-    dphibar = dt*(1 - dphibar_sum);
+    dphibar = dt*(1 - dphibar_sum) + sqrt(dt)*eta_phi*randn();
     phibar = phibar_past+dphibar;
     
     for j = 1:params.n_streams
@@ -42,7 +43,7 @@ for i=2:length(t_list)
     C = V_past+dC;
     
     for j = 1:params.n_streams
-        if event_num(j) <= length(params.streams{j}.event_times) && (t>params.streams{j}.event_times(event_num(j)) & t_past<=params.streams{j}.event_times(event_num(j)))
+        if event_num(j) <= length(params.streams{j}.perceived_event_times) && (t>params.streams{j}.perceived_event_times(event_num(j)) & t_past<=params.streams{j}.perceived_event_times(event_num(j)))
             phibar_tmp = params.streams{j}.phi_hat(phibar, C);
             C = params.streams{j}.V_hat(phibar_tmp, phibar, C);
             phibar = phibar_tmp;
@@ -52,6 +53,17 @@ for i=2:length(t_list)
 
     phibar_list(i) = phibar;
     V_list(i) = C;
+end
+
+tap_times = [];
+tap_num = 0;
+tap_thresh = params.tap_threshold;
+
+for i = 2:length(phibar_list)
+    if phibar_list(i) > tap_num+tap_thresh
+        tap_times(end+1) = i*dt + (1-tap_thresh);
+        tap_num = tap_num+1;
+    end
 end
 
 if params.display
@@ -69,8 +81,17 @@ if params.display
             elseif params.streams{j}.highlight_event_indices(i)==2
                 width = 1.5;
             end
-            plot([1,1]*params.streams{j}.event_times(i), [0,t_max], linespec, 'LineWidth', width);
+            plot([1,1]*params.streams{j}.perceived_event_times(i), [0,t_max], linespec, 'LineWidth', width);
         end
+        if params.tapping
+            for i=1:length(tap_times)
+                width = .5;
+                linespec = 'k:';
+
+                plot([1,1]*tap_times(i), [0,t_max], linespec, 'LineWidth', width);
+            end
+        end
+        
 
         for i=1:length(params.streams{j}.e_means)
             width = .5;

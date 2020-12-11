@@ -25,7 +25,11 @@ addParameter(p,'dt',0.001);                  % Integration time step
 addParameter(p,'phibar_0',0);                % Initial estimated phase
 addParameter(p,'V_0',0.0002);                % Initial variance
 addParameter(p,'sigma_phi',0.05);            % Generative model phase noise
+addParameter(p,'eta_phi',0);                 % Internal phase noise
+addParameter(p,'eta_e',0);                   % Internal event noise
 addParameter(p,'display', true);             % Display graphic showing evolution of phase posterior over time
+addParameter(p,'tapping', true);             % Simulate taps
+addParameter(p,'tap_threshold', 0.75);        % If tapping, at what phase is tap action initiated (no correction after that)
 addParameter(p,'title', '');                 % Title of simulation
 
 parse(p,varargin{:})
@@ -78,6 +82,12 @@ for j = 1:out.n_streams
             event_times = out.event_times;
         end
         
+        if iscell(out.eta_e)
+            eta_e = out.eta_e{j};
+        else
+            eta_e = out.eta_e;
+        end
+        
         if iscell(out.highlight_event_indices)
             highlight_event_indices = out.highlight_event_indices{j};
         else
@@ -94,7 +104,7 @@ for j = 1:out.n_streams
             highlight_event_indices = zeros(size(event_times));
         end
         
-        out.streams{j} = PIPPET_stream_params(means_unit, variance_unit, tau_unit, tau_0, expected_cycles, expected_period, event_times, highlight_expectations, highlight_event_indices);
+        out.streams{j} = PIPPET_stream_params(means_unit, variance_unit, tau_unit, tau_0, expected_cycles, expected_period, event_times, highlight_expectations, highlight_event_indices, eta_e);
         
         if isempty(highlight_expectations)
             out.streams{j}.highlight_expectations = zeros(size(out.streams{j}.e_means));

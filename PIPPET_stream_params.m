@@ -15,7 +15,7 @@
 % Output:
 %   p:   parameter set for stream
 
-function p = PIPPET_stream_params(means_unit, variance_unit, tau_unit, tau_0, expected_cycles, expected_period, event_times, highlight_expectations, highlight_event_indices)
+function p = PIPPET_stream_params(means_unit, variance_unit, tau_unit, tau_0, expected_cycles, expected_period, event_times, highlight_expectations, highlight_event_indices, eta_e)
 
 p = struct();
 
@@ -23,6 +23,7 @@ gauss_distribution = @(x, mean, v) exp(-.5 * ((x - mean).^ 2) ./ v)./ (sqrt(2*pi
 
 p.e_means = [];
 p.event_times = event_times;
+p.perceived_event_times = event_times + randn(size(event_times))*eta_e;
 p.tau_0 = tau_0;
 p.highlight_event_indices = highlight_event_indices;
 p.highlight_expectations = [];
