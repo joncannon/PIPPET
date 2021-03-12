@@ -12,8 +12,8 @@ addParameter(p,'n_streams',1);
 % individually.
 addParameter(p,'means_unit',[.25]);          % One unit of repeating pattern of expected event times
 addParameter(p,'variance_unit',[.0001]);     % One unit of repeating pattern of event expectation variances
-addParameter(p,'tau_unit',[0.02]);           % One unit of repeating pattern of event expectation strengths
-addParameter(p,'tau_0',0.01);                % tau_0
+addParameter(p,'lambda_unit',[0.02]);           % One unit of repeating pattern of event expectation strengths
+addParameter(p,'lambda_0',0.01);                % lambda_0
 addParameter(p,'expected_cycles',4);         % Number of repetitions of pattern
 addParameter(p,'expected_period',.25);       % Period of pattern repetition
 addParameter(p,'highlight_event_indices',[]);% Display weights for lines marking expected timepoints
@@ -22,15 +22,19 @@ addParameter(p,'event_times',[1]);           % Observed event times (should be g
 
 addParameter(p,'tmax',nan);                  % Max simulation time (default setting is based on event times and expected event times)
 addParameter(p,'dt',0.001);                  % Integration time step
-addParameter(p,'phibar_0',0);                % Initial estimated phase
+addParameter(p,'mu_0',0);                    % Initial estimated phase
 addParameter(p,'V_0',0.0002);                % Initial variance
 addParameter(p,'sigma_phi',0.05);            % Generative model phase noise
 addParameter(p,'eta_phi',0);                 % Internal phase noise
 addParameter(p,'eta_e',0);                   % Internal event noise
 addParameter(p,'display', true);             % Display graphic showing evolution of phase posterior over time
-addParameter(p,'tapping', true);             % Simulate taps
-addParameter(p,'tap_threshold', 0.75);        % If tapping, at what phase is tap action initiated (no correction after that)
+addParameter(p,'tapping', false);             % Simulate taps
+addParameter(p,'tap_threshold', 0.4);        % If tapping, at what phase is tap action initiated (no correction after that)
+addParameter(p,'tap_stream', 2);             % Event stream associated with taps
+addParameter(p,'intertap_phase', .5);         % Tap period (measured in phase units)
 addParameter(p,'title', '');                 % Title of simulation
+addParameter(p,'motor_eta', 0);            % SD of noise added to each tap time
+addParameter(p,'stream_colors', {"k", "r", "g"});  % Color specs for each stream
 
 parse(p,varargin{:})
 out = p.Results;
@@ -52,16 +56,16 @@ for j = 1:out.n_streams
             variance_unit = out.variance_unit;
         end
         
-        if iscell(out.tau_unit)
-            tau_unit = out.tau_unit{j};
+        if iscell(out.lambda_unit)
+            lambda_unit = out.lambda_unit{j};
         else
-            tau_unit = out.tau_unit;
+            lambda_unit = out.lambda_unit;
         end
         
-        if iscell(out.tau_0)
-            tau_0 = out.tau_0{j};
+        if iscell(out.lambda_0)
+            lambda_0 = out.lambda_0{j};
         else
-            tau_0 = out.tau_0;
+            lambda_0 = out.lambda_0;
         end
         
         if iscell(out.expected_cycles)
@@ -104,7 +108,7 @@ for j = 1:out.n_streams
             highlight_event_indices = zeros(size(event_times));
         end
         
-        out.streams{j} = PIPPET_stream_params(means_unit, variance_unit, tau_unit, tau_0, expected_cycles, expected_period, event_times, highlight_expectations, highlight_event_indices, eta_e);
+        out.streams{j} = PIPPET_stream_params(means_unit, variance_unit, lambda_unit, lambda_0, expected_cycles, expected_period, event_times, highlight_expectations, highlight_event_indices, eta_e);
         
         if isempty(highlight_expectations)
             out.streams{j}.highlight_expectations = zeros(size(out.streams{j}.e_means));
@@ -126,5 +130,5 @@ if isnan(out.tmax)
 end
 
 for j = 1:out.n_streams
-    out.streams{j}.expect_func = @(x_list) expectation_func(x_list, out.streams{j}.e_means, out.streams{j}.e_vars, out.streams{j}.e_taus, out.streams{j}.tau_0);
+    out.streams{j}.expect_func = @(x_list) expectation_func(x_list, out.streams{j}.e_means, out.streams{j}.e_vars, out.streams{j}.e_lambdas, out.streams{j}.lambda_0);
 end

@@ -14,8 +14,8 @@ addParameter(p,'n_streams',1,@isnumeric);               % Number of distinct eve
 % individually.
 addParameter(p,'means_unit',[.25],@isnumeric);          % One unit of repeating pattern of expected event times
 addParameter(p,'variance_unit',[.001],@isnumeric);      % One unit of repeating pattern of event expectation variances
-addParameter(p,'tau_unit',[0.02],@isnumeric);           % One unit of repeating pattern of event expectation strengths
-addParameter(p,'tau_0',0.01,@isnumeric);                % tau_0
+addParameter(p,'lambda_unit',[0.02],@isnumeric);           % One unit of repeating pattern of event expectation strengths
+addParameter(p,'lambda_0',0.01,@isnumeric);                % lambda_0
 addParameter(p,'expected_cycles',4,@isnumeric);         % Number of repetitions of pattern
 addParameter(p,'expected_period',.25,@isnumeric);       % Period of pattern repetition
 addParameter(p,'highlight_event_indices',[]);           % Display weights for lines marking expected timepoints
@@ -24,8 +24,8 @@ addParameter(p,'event_times',[1],@isnumeric);           % Observed event times (
 
 addParameter(p,'tmax',nan,@isnumeric);                  % Max simulation time (default setting is based on event times and expected event times)
 addParameter(p,'dt',0.001,@isnumeric);                  % Integration time step
-addParameter(p,'xbar_0',[0; 1],@isnumeric);             % Initial estimated phase and tempo
-addParameter(p,'Sigma_0',[.0001,0; 0,.04],@isnumeric);  % Initial covariance matrix
+addParameter(p,'mu_0',[0; 1],@isnumeric);             % Initial estimated phase and tempo
+addParameter(p,'V_0',[.0001,0; 0,.04],@isnumeric);  % Initial covariance matrix
 addParameter(p,'sigma_phi',0.05,@isnumeric);            % Generative model phase noise
 addParameter(p,'display_phasetempo', true);             % Display ellipse graphic showing joint phase-tempo posteriors over time
 addParameter(p,'display_phase', false);                 % Display graphic showing evolution of phase posterior over time
@@ -36,6 +36,8 @@ addParameter(p,'sigma_theta',0.05,@isnumeric);          % Generative model tempo
 addParameter(p,'true_speed',1,@isnumeric);              % Reference tempo for display (if simulation is based on hidden underlying tempo, use that)
 addParameter(p,'dt_ellipse',.2,@isnumeric);             % Strobe period for ellipse display
 addParameter(p,'corrected',true);                       % Whether to use corrected PATIPPET model (normalizes event rate over phase rather than time)
+
+addParameter(p,'TDDM',false);
 
 addParameter(p,'title', '');                            % Title of simulation
 
@@ -61,16 +63,16 @@ for j = 1:out.n_streams
             variance_unit = out.variance_unit;
         end
         
-        if iscell(out.tau_unit)
-            tau_unit = out.tau_unit{j};
+        if iscell(out.lambda_unit)
+            lambda_unit = out.lambda_unit{j};
         else
-            tau_unit = out.tau_unit;
+            lambda_unit = out.lambda_unit;
         end
         
-        if iscell(out.tau_0)
-            tau_0 = out.tau_0{j};
+        if iscell(out.lambda_0)
+            lambda_0 = out.lambda_0{j};
         else
-            tau_0 = out.tau_0;
+            lambda_0 = out.lambda_0;
         end
         
         if iscell(out.expected_cycles)
@@ -111,7 +113,7 @@ for j = 1:out.n_streams
             highlight_event_indices = zeros(size(event_times));
         end
         
-        out.streams{j} = PATIPPET_stream_params(means_unit, variance_unit, tau_unit, tau_0, expected_cycles, expected_period, event_times, highlight_expectations, highlight_event_indices, out.corrected);
+        out.streams{j} = PATIPPET_stream_params(means_unit, variance_unit, lambda_unit, lambda_0, expected_cycles, expected_period, event_times, highlight_expectations, highlight_event_indices, out.corrected);
         
         if isempty(highlight_expectations)
             out.streams{j}.highlight_expectations = zeros(size(out.streams{j}.e_means));
@@ -137,5 +139,5 @@ if isnan(out.phimax)
 end
 
 for j = 1:out.n_streams
-    out.streams{j}.expect_func = @(x_list) expectation_func(x_list, out.streams{j}.e_means, out.streams{j}.e_vars, out.streams{j}.e_taus, out.streams{j}.tau_0);
+    out.streams{j}.expect_func = @(x_list) expectation_func(x_list, out.streams{j}.e_means, out.streams{j}.e_vars, out.streams{j}.e_lambdas, out.streams{j}.lambda_0);
 end

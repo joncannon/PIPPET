@@ -1,7 +1,7 @@
 % © Jonathan Cannon, MIT, 2020
 % Simulates PATIPPET model with specified parameters.
 
-function [xbar_list, Sigma_list] = run_PATIPPET(params)
+function [mu_list, V_list] = run_PATIPPET(params)
 
 gauss2 = @(x,y, mean, V) exp(-.5 * (([x,y]' - mean)'*(V\([x,y]'-mean))))./ (sqrt((2*pi)^2*abs(det(V))));
 
@@ -10,15 +10,15 @@ dt = params.dt;
 sigma_phi = params.sigma_phi;
 sigma_theta = params.sigma_theta;
 
-ybounds = [params.true_speed-.5, params.true_speed+.5];
+ybounds = [params.true_speed-.6, params.true_speed+.6];
 
 t_list = 0:dt:ceil(t_max/dt)*dt;
 
-xbar_list = zeros(2, length(t_list));
-xbar_list(:,1) = params.xbar_0;
+mu_list = zeros(2, length(t_list));
+mu_list(:,1) = params.mu_0;
 
-Sigma_list = zeros(2,2,length(t_list));
-Sigma_list(:,:,1) = params.Sigma_0;
+V_list = zeros(2,2,length(t_list));
+V_list(:,:,1) = params.V_0;
 
 event_num = ones(1,params.n_streams);
 
@@ -26,37 +26,44 @@ for i=2:length(t_list)
     t = t_list(i);
 
     t_past = t_list(i-1);
-    Sigma_past = Sigma_list(:,:,i-1);
-    xbar_past = xbar_list(:,i-1);
+    V_past = V_list(:,:,i-1);
+    mu_past = mu_list(:,i-1);
     
-    dxbar_sum = 0;
-    dSigma_sum = 0;
-    
-    for j = 1:params.n_streams
-        dxbar_sum = dxbar_sum + params.streams{j}.T_hat(xbar_past, Sigma_past)*(params.streams{j}.x_hat(xbar_past, Sigma_past)-xbar_past);
-    end
-    
-    dxbar = dt*([xbar_past(2); 0] - dxbar_sum);
-    xbar = xbar_past+dxbar;
+    dmu_sum = 0;
+    dV_sum = 0;
     
     for j = 1:params.n_streams
-        dSigma_sum = dSigma_sum + params.streams{j}.T_hat(xbar_past, Sigma_past)*(params.streams{j}.Sigma_hat(xbar, xbar_past, Sigma_past)-Sigma_past);
+        dmu_sum = dmu_sum + params.streams{j}.Lambda(mu_past, V_past)*(params.streams{j}.mu_hat(mu_past, V_past)-mu_past);
     end
-    dSigma = dt*([sigma_phi^2 + 2*Sigma_past(1,2), Sigma_past(2,2); Sigma_past(2,2), sigma_theta^2] - dSigma_sum);
-    Sigma = Sigma_past+dSigma;
+    
+    dmu = dt*([mu_past(2); 0] - dmu_sum);
+    mu = mu_past+dmu;
+    
+    for j = 1:params.n_streams
+        dV_sum = dV_sum + params.streams{j}.Lambda(mu_past, V_past)*(params.streams{j}.V_hat(mu, mu_past, V_past)-V_past);
+    end
+    
+    if params.TDDM
+        extra_noise = mu(2);
+    else
+        extra_noise = 1;
+    end
+    
+    dV = dt*([sigma_phi^2*extra_noise + 2*V_past(1,2), V_past(2,2); V_past(2,2), sigma_theta^2] - dV_sum);
+    V = V_past+dV;
     
     for j = 1:params.n_streams
         if event_num(j) <= length(params.streams{j}.event_times) && (t>=params.streams{j}.event_times(event_num(j)) & t_past<params.streams{j}.event_times(event_num(j)))
-            xbar_tmp = params.streams{j}.x_hat(xbar, Sigma);
-            Sigma_tmp = params.streams{j}.Sigma_hat(xbar_tmp, xbar, Sigma);
-            Sigma = Sigma_tmp;
-            xbar = xbar_tmp;
+            mu_tmp = params.streams{j}.mu_hat(mu, V);
+            V_tmp = params.streams{j}.V_hat(mu_tmp, mu, V);
+            V = V_tmp;
+            mu = mu_tmp;
             event_num(j) = event_num(j)+1;
         end
     end
 
-    xbar_list(:,i) = xbar;
-    Sigma_list(:,:,i) = Sigma;
+    mu_list(:,i) = mu;
+    V_list(:,:,i) = V;
 end
 
 if params.display_phasetempo
@@ -67,23 +74,22 @@ if params.display_phasetempo
     expect_func = params.streams{1}.expect_func;
     
     figure()
-    
 
     subplot(5,1,5)
-    plot(phi_list, expect_func(phi_list), 'k')
+    plot(phi_list, expect_func(phi_list), 'b')
     xlim([-.2, params.phimax])
     xlabel('Phase $\phi$','Interpreter','Latex')
-    ylabel({'Expectation';'$\tau(\phi)$'},'Interpreter','Latex')
+    ylabel({'Expectation';'$\lambda(\phi)$'},'Interpreter','Latex')
     
     subplot(5,1, [1,2,3,4])
     
 
-    h=plot_ellipses(xbar_list(:,1), Sigma_list(:,:,1), params.phimax, ybounds, [1/4, 1/4]);
+    h=plot_ellipses(mu_list(:,1), V_list(:,:,1), params.phimax, ybounds, [1/4, 1/4]);
     h.LineWidth = 2;
     h.LineColor = [1,0,0];
 
     hold on
-    plot(xbar_list(1,:), xbar_list(2,:), 'ko-')
+    plot(mu_list(1,:), mu_list(2,:), 'ko-')
     
     for i=2:length(t_list)
         t = t_list(i);
@@ -91,10 +97,10 @@ if params.display_phasetempo
         for j = 1:length(event_times)
             if t>=event_times(j) & t_past<event_times(j)
 
-                h=plot_ellipses(xbar_list(:,i-1), Sigma_list(:,:,i-1), params.phimax, ybounds, [1/4, 1/4]);
-                h.LineColor = [0,0,1];
+                h=plot_ellipses(mu_list(:,i-1), V_list(:,:,i-1), params.phimax, ybounds, [1/4, 1/4]);
+                h.LineColor = [0,.7,0];
                 h.LineWidth = 2;
-                h=plot_ellipses(xbar_list(:,i), Sigma_list(:,:,i), params.phimax, ybounds, [1/4, 1/4]);
+                h=plot_ellipses(mu_list(:,i), V_list(:,:,i), params.phimax, ybounds, [1/4, 1/4]);
                 h.LineWidth = 2;
                 h.LineColor = [1,0,0];
             end
@@ -103,8 +109,9 @@ if params.display_phasetempo
         end
         if floor(t/params.dt_ellipse)>floor(t_past/params.dt_ellipse)
 
-            h=plot_ellipses(xbar_list(:,i), Sigma_list(:,:,i), params.phimax, ybounds, [1/4, 1/4]);
+            h=plot_ellipses(mu_list(:,i), V_list(:,:,i), params.phimax, ybounds, [1/4, 1/4]);
             h.LineColor = [0,0,0];
+            h.LineStyle = ':';
         end
     end
     xlim([-.2, params.phimax])
@@ -125,26 +132,13 @@ if params.display_phasetempo
 end
 
 
-function h = plot_ellipses(xbar, Sigma, phimax, ybounds, levels)
-    [X,Y]=meshgrid(-.2:0.01:phimax, ybounds(1):0.01:ybounds(2));
-    z = zeros(size(X));
-    for n = 1:size(X,1)
-        for m = 1:size(X,2)
-            z(n,m)=gauss2(X(n,m),Y(n,m), xbar, Sigma);
-        end
-    end
-    
-    top = max(max(z));
-    bottom = min(min(z));
-    [C,h] = contour(X,Y,z,top*levels + bottom+(1-levels));
-end
 
 
 
 if params.display_phase
     figure()
     subplot(1,5, [2,3,4,5])
-    shadedErrorBar(t_list, xbar_list(1,:), 2*sqrt(Sigma_list(1,1,:)))
+    shadedErrorBar(t_list, mu_list(1,:), 2*sqrt(V_list(1,1,:)))
     ylim([0, t_max])
     hold on
     for j = 1:params.n_streams
@@ -175,11 +169,11 @@ if params.display_phase
 
     subplot(1,5,1)
     for j = 1:params.n_streams
-        plot(params.streams{j}.expect_func(t_list), t_list, 'k');
+        plot(params.streams{j}.expect_func(t_list), t_list, 'b');
     end
     ylim([0, t_max])
     ylabel('Phase $\phi$','Interpreter','Latex')
-    xlabel({'Expectation';'$\tau(\phi)$'},'Interpreter','Latex');
+    xlabel({'Expectation';'$\lambda(\phi)$'},'Interpreter','Latex');
     set(gca,'Yticklabel',[])
     sgtitle(params.title)
     
@@ -188,7 +182,7 @@ end
 
 if params.display_tempo
     figure()
-    shadedErrorBar(t_list, xbar_list(2,:), 2*sqrt(Sigma_list(2,2,:)))
+    shadedErrorBar(t_list, mu_list(2,:), 2*sqrt(V_list(2,2,:)))
     hold on
     for j = 1:params.n_streams
         for i=1:length(params.streams{j}.event_times)
@@ -211,4 +205,20 @@ if params.display_tempo
     sgtitle(params.title)
     
 end
+end
+
+
+function h = plot_ellipses(mu, V, phimax, ybounds, levels)
+    gauss2 = @(x,y, mean, V) exp(-.5 * (([x,y]' - mean)'*(V\([x,y]'-mean))))./ (sqrt((2*pi)^2*abs(det(V))));
+    [X,Y]=meshgrid(-.2:0.01:phimax, ybounds(1):0.01:ybounds(2));
+    z = zeros(size(X));
+    for n = 1:size(X,1)
+        for m = 1:size(X,2)
+            z(n,m)=gauss2(X(n,m),Y(n,m), mu, V);
+        end
+    end
+    
+    top = max(max(z));
+    bottom = min(min(z));
+    [C,h] = contour(X,Y,z,top*levels + bottom+(1-levels));
 end
