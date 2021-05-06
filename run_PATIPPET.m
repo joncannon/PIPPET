@@ -1,7 +1,7 @@
 % © Jonathan Cannon, MIT, 2020
 % Simulates PATIPPET model with specified parameters.
 
-function [mu_list, V_list] = run_PATIPPET(params)
+function [mu_list, V_list, surprisal_prepost, grad_surprisal] = run_PATIPPET(params)
 
 gauss2 = @(x,y, mean, V) exp(-.5 * (([x,y]' - mean)'*(V\([x,y]'-mean))))./ (sqrt((2*pi)^2*abs(det(V))));
 
@@ -20,6 +20,9 @@ mu_list(:,1) = params.mu_0;
 V_list = zeros(2,2,length(t_list));
 V_list(:,:,1) = params.V_0;
 
+surprisal_prepost = zeros([numel(t_list), params.n_streams, 2]);
+grad_surprisal = zeros([numel(t_list),1]);
+
 event_num = ones(1,params.n_streams);
 
 for i=2:length(t_list)
@@ -31,6 +34,8 @@ for i=2:length(t_list)
     
     dmu_sum = 0;
     dV_sum = 0;
+    
+    grad_surprisal_sum = 0;
     
     for j = 1:params.n_streams
         dmu_sum = dmu_sum + params.streams{j}.Lambda(mu_past, V_past)*(params.streams{j}.mu_hat(mu_past, V_past)-mu_past);
@@ -59,11 +64,21 @@ for i=2:length(t_list)
             V = V_tmp;
             mu = mu_tmp;
             event_num(j) = event_num(j)+1;
+            surprisal_prepost(i,j,1) = -log(params.streams{j}.Lambda(mu_past, V_past)*dt);
+            surprisal_prepost(i,j,2) = -log(params.streams{j}.Lambda(mu, V)*dt);
+            grad_surprisal_sum = grad_surprisal_sum ...
+                +(-log(params.streams{j}.Lambda(mu_past+.01, V_past)*dt) + log(params.streams{j}.Lambda(mu_past-.01, V_past)*dt))/.02;
+        else
+            surprisal_prepost(i,j,1) = -log(1-params.streams{j}.Lambda(mu_past, V_past)*dt);
+            surprisal_prepost(i,j,2) = -log(1-params.streams{j}.Lambda(mu, V)*dt);
+            grad_surprisal_sum = grad_surprisal_sum ...
+                +(-log(1-params.streams{j}.Lambda(mu_past+.01, V_past)*dt) + log(1-params.streams{j}.Lambda(mu_past-.01, V_past)*dt))/.02;
         end
     end
 
     mu_list(:,i) = mu;
     V_list(:,:,i) = V;
+    grad_surprisal(i) = grad_surprisal_sum;
 end
 
 if params.display_phasetempo

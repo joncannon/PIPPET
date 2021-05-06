@@ -12,15 +12,15 @@ addParameter(p,'n_streams',1,@isnumeric);               % Number of distinct eve
 % Inputs in this block can be given either as scalars/arrays to pertain to
 % all event streams, or as cell arrays to pertain to each event stream
 % individually.
-addParameter(p,'means_unit',[.25],@isnumeric);          % One unit of repeating pattern of expected event times
-addParameter(p,'variance_unit',[.001],@isnumeric);      % One unit of repeating pattern of event expectation variances
-addParameter(p,'lambda_unit',[0.02],@isnumeric);           % One unit of repeating pattern of event expectation strengths
-addParameter(p,'lambda_0',0.01,@isnumeric);                % lambda_0
-addParameter(p,'expected_cycles',4,@isnumeric);         % Number of repetitions of pattern
-addParameter(p,'expected_period',.25,@isnumeric);       % Period of pattern repetition
+addParameter(p,'means_unit',[.25]);          % One unit of repeating pattern of expected event times
+addParameter(p,'variance_unit',[.001]);      % One unit of repeating pattern of event expectation variances
+addParameter(p,'lambda_unit',[0.02]);           % One unit of repeating pattern of event expectation strengths
+addParameter(p,'lambda_0',0.01);                % lambda_0
+addParameter(p,'expected_cycles',4);         % Number of repetitions of pattern
+addParameter(p,'expected_period',.25);       % Period of pattern repetition
 addParameter(p,'highlight_event_indices',[]);           % Display weights for lines marking expected timepoints
 addParameter(p,'highlight_expectations',[]);            % Display weights for lines marking event times
-addParameter(p,'event_times',[1],@isnumeric);           % Observed event times (should be given as cell array if there are multiple streams!)
+addParameter(p,'event_times',[1]);           % Observed event times (should be given as cell array if there are multiple streams!)
 
 addParameter(p,'tmax',nan,@isnumeric);                  % Max simulation time (default setting is based on event times and expected event times)
 addParameter(p,'dt',0.001,@isnumeric);                  % Integration time step
