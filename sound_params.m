@@ -1,6 +1,6 @@
 function params = sound_params()
 
-    % create sound parameters specific to this experiment
+    % collect a set of sounds and assign to indices
     params = struct();
 
     params.Fs = 44100;

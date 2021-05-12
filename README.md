@@ -12,8 +12,6 @@ Jonathan Cannon, MIT, 2020
 -  These functions call subordinate functions "PIPPET_stream_params" and "PATIPPET_stream_params" once for each separate stream of point process events (only one stream for all simulations in the paper, but this code should generalize nicely to multiple streams).
 -  To run a simulation with multiple streams, parameters can be entered for each stream as a cell array, or entered as scalars to apply to all streams.
  
- More thorough documentation of functions to follow...
- 
  
  11/30/2020:
  Several important changes have been made to the code and manuscript since biorxiv posting:
